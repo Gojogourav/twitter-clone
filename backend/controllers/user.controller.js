@@ -119,7 +119,7 @@ export const updateUser = async(req,res)=>{
         let user = await User.findById(userId)
         if(!user) return res.status(404).json({message:"User not found!"})
         
-        if((!currentPassword && currentPassword) || (!newPassword && currentPassword)) return res.status(400).json({message:"Please enter both passwords"})
+        if((!newPassword && currentPassword) || (!currentPassword && newPassword)) return res.status(400).json({message:"Please enter both passwords"})
         
         if(currentPassword && newPassword){
             const isMatch = await bcrypt.compare(currentPassword,user.password)
@@ -162,9 +162,14 @@ export const updateUser = async(req,res)=>{
     
         user = await user.save();
 
-        user.password = null
         
-        return res.status(200).json(user)
+        return res.status(200).json(user.toObject({
+            versionKey:false,
+            transform:(doc,ret)=>{
+                delete ret.password;
+                return ret
+            }
+        }))
     }catch(error){
         console.log(`Error occured in updateUser collection : ${error.message}`);
         res.status(500).json({error: error.message})
